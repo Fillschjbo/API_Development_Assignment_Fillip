@@ -1,6 +1,7 @@
 async function getData() {
     try {
-        const response = await fetch("http://localhost:1337/fragrances");
+        const user = localStorage.getItem('username');
+        const response = await fetch(`http://localhost:1337/fragrances/${user}`);
         const data = await response.json();
         displayData(data);
     } catch (error) {
@@ -39,6 +40,7 @@ function displayData(data) {
 const loginbtn = document.getElementById('login');
 const createNew = document.getElementById('new');
 const collection = document.getElementById('collection');
+const home = document.getElementById('home');
 
 if(localStorage.getItem('token')){
     loginbtn.innerText = "Log Out";
@@ -51,8 +53,8 @@ if(localStorage.getItem('token')){
     createNew.addEventListener('click', ()=> {
         window.location.href = "/API-Development-Assignment-Fillip/createNew/createNew.html";
     })
-    collection.addEventListener('click', ()=> {
-        window.location.href = "/API-Development-Assignment-Fillip/collection/collection.html";
+    home.addEventListener('click', ()=> {
+        window.location.href = "../index.html";
     })
 }else {
     loginbtn.innerText = "Log In";

@@ -3,9 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
-  <script type="module" src="js/script.js"></script>
+  <script type="module" src="js/script.js" defer></script>
+    <style>
+        img {
+            display: flex;
+            max-width: 400px;
+            max-height: 420px;
+        }
+    </style>
 </head>
 <body>
+    <header>
+        <ul>
+            <li>Home</li>
+            <li id="collection">Your Collection</li>
+            <li id="login"></li>
+            <li id="new">Add Fragrance</li>
+        </ul>
+    </header>
+    <main>
+        <div id="fragranceList">
 
+        </div>
+    </main>
 </body>
 </html>
