@@ -38,84 +38,110 @@ const authenticateToken = (req, res, next) => {
 };
 
 app.get("/", authenticateToken, (req, res) => {
-    res.json({ message: "Token verified", user: req.user });
+    try {
+        res.json({ message: "Token verified", user: req.user });
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching data" });
+    }
 });
 
-app.post("/user", async(req, res) => {
-    const {username, email, password} = req.body;
-    const [result] = await connection.query(`
-    INSERT INTO user(username, email, password) VALUES ('${username}', '${email}', '${password}')
-    `)
+app.post("/user", async (req, res) => {
+    try {
+        const { username, email, password } = req.body;
+        const [result] = await connection.query(`
+        INSERT INTO user(username, email, password) VALUES ('${username}', '${email}', '${password}')
+        `);
 
-    res.json(req.body)
+        res.json(req.body);
+    } catch (err) {
+        res.status(500).json({ message: "Error creating user" });
+    }
 });
 
-app.get("/user", async(req, res) => {
-    const sort = req.query.sort || "id";
-    const sortOrder = req.query.sortOrder || "ASC";
-    const [result, fields] = await connection.query(" SELECT * FROM user ORDER BY " + sort + " " + sortOrder)
-    res.json(result)
+app.get("/user", async (req, res) => {
+    try {
+        const sort = req.query.sort || "id";
+        const sortOrder = req.query.sortOrder || "ASC";
+        const [result, fields] = await connection.query(" SELECT * FROM user ORDER BY " + sort + " " + sortOrder);
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching users" });
+    }
 });
 
 async function checkPassword(username, password) {
-    const [rows] = await connection.query("SELECT id, username, password FROM user WHERE username = ?", [username]);
+    try {
+        const [rows] = await connection.query("SELECT id, username, password FROM user WHERE username = ?", [username]);
 
-    if (rows.length === 0) {
+        if (rows.length === 0) {
+            return null;
+        }
+
+        const user = rows[0];
+
+        if (user.password === password) {
+            return user.id;
+        }
+
         return null;
+    } catch (err) {
+        throw new Error("Error checking password");
     }
-
-    const user = rows[0];
-
-    if (user.password === password) {
-        return  user.id;
-    }
-
-    return null;
 }
 
-
 app.post("/login", async (req, res) => {
-    const { username, password } = req.body;
+    try {
+        const { username, password } = req.body;
 
-    if (!username || !password) {
-        return res.status(400).json({ message: "Username and password are required" });
-    }
+        if (!username || !password) {
+            return res.status(400).json({ message: "Username and password are required" });
+        }
 
-    const userId = await checkPassword(username, password);
+        const userId = await checkPassword(username, password);
 
-    if (userId) {
-        const token = jwt.sign({id:userId, username }, SECRET, { expiresIn: "1h" });
-        res.json({ message: "success", accessToken: token, id: userId, username:username });
-    } else {
-        res.status(401).json({ message: "Invalid credentials" });
+        if (userId) {
+            const token = jwt.sign({ id: userId, username }, SECRET, { expiresIn: "1h" });
+            res.json({ message: "success", accessToken: token, id: userId, username: username });
+        } else {
+            res.status(401).json({ message: "Invalid credentials" });
+        }
+    } catch (err) {
+        res.status(500).json({ message: "Error logging in" });
     }
 });
 
 app.get("/fragrances", async (req, res) => {
-    const sort = req.query.sort || "id";
-    const sortOrder = req.query.sortOrder || "DESC";
-    const [result] = await connection.query(
-        `SELECT fragrance.*, user.username 
+    try {
+        const sort = req.query.sort || "id";
+        const sortOrder = req.query.sortOrder || "DESC";
+        const [result] = await connection.query(
+            `SELECT fragrance.*, user.username 
             FROM fragrance 
             JOIN user ON fragrance.user_id = user.id 
             ORDER BY ?? ${sortOrder}`,
-        [sort]
-    );
-    res.json(result)
+            [sort]
+        );
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching fragrances" });
+    }
 });
 
-app.post("/fragrances", authenticateToken, async (req, res) =>{
-  const {brand, name, scent_profile, img_url, user_id} = req.body;
-    const [result] = await connection.query(`
-    INSERT INTO fragrance(brand, name, scent_profile, img_url, user_id) VALUES (
-    '${brand}',
-    '${name}',
-    '${scent_profile}',
-    '${img_url}',
-    '${user_id}'
-    )
-    `)
-    res.json(req.body)
+app.post("/fragrances", authenticateToken, async (req, res) => {
+    try {
+        const { brand, name, scent_profile, img_url, user_id } = req.body;
+        const [result] = await connection.query(`
+        INSERT INTO fragrance(brand, name, scent_profile, img_url, user_id) VALUES (
+        '${brand}',
+        '${name}',
+        '${scent_profile}',
+        '${img_url}',
+        '${user_id}'
+        )`);
+        res.json(req.body);
+    } catch (err) {
+        res.status(500).json({ message: "Error creating fragrance" });
+    }
 });
 
 app.delete("/fragrances/:id", authenticateToken, async (req, res) => {
@@ -135,7 +161,6 @@ app.delete("/fragrances/:id", authenticateToken, async (req, res) => {
 
         res.json({ message: "Fragrance deleted successfully" });
     } catch (err) {
-        console.error(err);
         res.status(500).json({ message: "Error deleting fragrance" });
     }
 });
@@ -161,11 +186,9 @@ app.get("/fragrances/:username", async (req, res) => {
 
         res.json(result);
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "An error occurred while fetching fragrances" });
+        res.status(500).json({ message: "Error fetching fragrances" });
     }
 });
-
 
 app.listen(port, () => {
     console.log(`Server started on port: ${port}`);
