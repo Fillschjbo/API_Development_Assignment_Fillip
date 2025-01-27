@@ -19,5 +19,6 @@ document.getElementById('register').addEventListener("submit", async (e)=>{
         body: JSON.stringify(body)
     });
     const data = await response.json();
+    window.location.href = "../login/login.html"
     console.log(data)
 })

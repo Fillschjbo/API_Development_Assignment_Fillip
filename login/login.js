@@ -14,8 +14,8 @@ async function login() {
 
     const data = await res.json();
     console.log(data);
-    localStorage.setItem('userId', data.id.id)
-    localStorage.setItem('username', data.id.username)
+    localStorage.setItem('userId', data.id)
+    localStorage.setItem('username', data.username)
     localStorage.setItem("token", data.accessToken);
     window.location.href = "../index.html"
 }

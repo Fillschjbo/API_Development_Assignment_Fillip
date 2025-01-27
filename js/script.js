@@ -8,6 +8,28 @@ async function getData() {
     }
 }
 
+async function deletePost(id) {
+    try {
+        const response = await fetch(`http://localhost:1337/fragrances/${id}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": `Bearer ${localStorage.getItem('token')}`,
+                "Content-Type": "application/json"
+            },
+        });
+
+        if (response.ok) {
+            console.log(`Post with ID ${id} deleted successfully`);
+            getData();
+        } else {
+            const errorData = await response.json();
+            console.error("Failed to delete post:", errorData.message);
+        }
+    } catch (error) {
+        console.error("Error while deleting post:", error);
+    }
+}
+
 function displayData(data) {
     const fragranceList = document.getElementById("fragranceList");
     fragranceList.innerHTML = "";
@@ -18,7 +40,22 @@ function displayData(data) {
 
         const image = document.createElement("img");
         image.src = `${item.img_url}`;
-        fragranceDiv.appendChild(image)
+        fragranceDiv.appendChild(image);
+
+        if (localStorage.getItem('username') === `${item.username}`) {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = "Delete post";
+
+            deleteBtn.addEventListener("click", () => {
+                console.log(`Delete post with ID: ${item.id}`);
+                const itemId = item.id;
+                console.log(itemId)
+                deletePost(itemId);
+            });
+
+            fragranceDiv.appendChild(deleteBtn);
+        }
+
 
         const title = document.createElement("h2");
         title.textContent = `${item.brand}  ${item.name}`;

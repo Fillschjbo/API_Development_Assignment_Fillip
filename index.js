@@ -30,6 +30,7 @@ const authenticateToken = (req, res, next) => {
     const token = authHeader.split(" ")[1];
     try {
         req.user = jwt.verify(token, SECRET);
+        console.log(req.user)
         next();
     } catch (err) {
         res.status(403).json({ message: "Invalid token" });
@@ -66,7 +67,7 @@ async function checkPassword(username, password) {
     const user = rows[0];
 
     if (user.password === password) {
-        return { id: user.id, username: user.username };
+        return  user.id;
     }
 
     return null;
@@ -83,8 +84,8 @@ app.post("/login", async (req, res) => {
     const userId = await checkPassword(username, password);
 
     if (userId) {
-        const token = jwt.sign({ username }, SECRET, { expiresIn: "1h" });
-        res.json({ message: "success", accessToken: token, id: userId });
+        const token = jwt.sign({id:userId, username }, SECRET, { expiresIn: "1h" });
+        res.json({ message: "success", accessToken: token, id: userId, username:username });
     } else {
         res.status(401).json({ message: "Invalid credentials" });
     }
@@ -115,6 +116,28 @@ app.post("/fragrances", authenticateToken, async (req, res) =>{
     )
     `)
     res.json(req.body)
+});
+
+app.delete("/fragrances/:id", authenticateToken, async (req, res) => {
+    const { id } = req.params;
+    try {
+        console.log(req.user.id);
+        console.log(req.user);
+
+        const [result] = await connection.query(
+            "DELETE FROM fragrance WHERE id = ? AND user_id = ?",
+            [id, req.user.id]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: "Fragrance not found or not authorized to delete" });
+        }
+
+        res.json({ message: "Fragrance deleted successfully" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Error deleting fragrance" });
+    }
 });
 
 app.get("/fragrances/:username", async (req, res) => {
