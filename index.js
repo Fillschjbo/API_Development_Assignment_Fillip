@@ -30,7 +30,6 @@ const authenticateToken = (req, res, next) => {
     const token = authHeader.split(" ")[1];
     try {
         req.user = jwt.verify(token, SECRET);
-        console.log(req.user)
         next();
     } catch (err) {
         res.status(403).json({ message: "Invalid token" });
@@ -147,9 +146,6 @@ app.post("/fragrances", authenticateToken, async (req, res) => {
 app.delete("/fragrances/:id", authenticateToken, async (req, res) => {
     const { id } = req.params;
     try {
-        console.log(req.user.id);
-        console.log(req.user);
-
         const [result] = await connection.query(
             "DELETE FROM fragrance WHERE id = ? AND user_id = ?",
             [id, req.user.id]
